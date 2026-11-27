@@ -13,9 +13,24 @@ def load_dataset(flatten=False):
     else:
         from urllib.request import urlretrieve
 
-    def download(filename, source='http://yann.lecun.com/exdb/mnist/'):
-        print("Downloading %s" % filename)
-        urlretrieve(source + filename, filename)
+    # yann.lecun.com/exdb/mnist/ отдаёт 404, поэтому используем зеркала.
+    SOURCES = [
+        'https://ossci-datasets.s3.amazonaws.com/mnist/',
+        'https://storage.googleapis.com/cvdf-datasets/mnist/',
+        'http://yann.lecun.com/exdb/mnist/',
+    ]
+
+    def download(filename, source=None):
+        last_error = None
+        for src in ([source] if source else SOURCES):
+            try:
+                print("Downloading %s from %s" % (filename, src))
+                urlretrieve(src + filename, filename)
+                return
+            except Exception as e:
+                last_error = e
+                print("  failed: %s" % e)
+        raise last_error
 
     # We then define functions for loading MNIST images and labels.
     # For convenience, they also download the requested files if needed.
@@ -63,6 +78,7 @@ def load_dataset(flatten=False):
     # We just return all the arrays in order, as expected in main().
     # (It doesn't matter how we do this as long as we can read them again.)
     return X_train, y_train, X_val, y_val, X_test, y_test
+
 
 
 
